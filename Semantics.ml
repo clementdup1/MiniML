@@ -202,53 +202,60 @@ let rec value_of_expr expr env =
     (* "let ident = bvalue in bin" *)
     ruleLet _env _ident _bvalue _bin =
     let v =
-      (value_of_expr bvalue env)
+      (value_of_expr _bvalue _env)
     in
     match v with
       | (ErrorValue _) as result -> result
       | _ -> let env1 =
-              (ident, v)::env
+              (_ident, v)::_env
             in 
-            (value_of_expr bin env1)
-
+            (value_of_expr _bin env1)
   (* ========================================================*)
   and
     (* ruleIf : environment -> ast -> ast -> ast- > valueType *)
     (* Fonction d'évaluation d'une conditionnelle *)
     (* "if cond then bthen else belse" *)
     ruleIf _env _cond _bthen _belse =
-    let v1 = (value_of_expr cond env) in
+    let v1 = (value_of_expr _cond _env) in
     match v1 with 
       | (ErrorValue _) as result -> result
-      | TrueNode -> (value_of_expr bthen env)
-      | FalseNode -> (value_of_expr belse env)
+      | (BooleanValue true) -> (value_of_expr _bthen _env)
+      | (BooleanValue false) -> (value_of_expr _belse _env)
       | _ -> (ErrorValue TypeMismatchError)
 
   (* ========================================================*)
   and
     (* ruleFunction : ast -> environment -> valueType *)
     (* Fonction d'évaluation d'une fonction *)
-    ruleFunction _env _expr =
-    (* A compléter *)
-    (ErrorValue UndefinedExpressionError)
-
+    ruleFunction _env _expr = FrozenValue (_expr, _env)
   (* Appel par nom *)
   (* ========================================================*)
   and
     (* ruleCallByName : environment -> ast -> ast -> valueType *)
     (* Fonction d'évaluation d'un appel de fonction avec passage de paramètre par nom*)
-    ruleCallByName _env _fexpr _pexpr =
-    (* A compléter *)
+    ruleCallByName _env _fexpr _pexpr = 
     (ErrorValue UndefinedExpressionError)
+
+    (* A compléter *)
 
   (* ========================================================*)
   and
     (* ruleCallByValue : environment -> ast -> ast -> valueType *)
     (* Fonction d'évaluation d'un appel de fonction avec passage de paramètre par valeur*)
     ruleCallByValue _env _fexpr _pexpr =
+    let v2 = (value_of_expr _pexpr _env) in
+    match v2 with 
+      | (ErrorValue _) as result -> result
+      | _ ->
+        let v1 = (value_of_expr _fexpr _env) 
+        in
+        match v1 with
+          | (ErrorValue _) as result -> result
+          | (FrozenValue(FunctionNode(ident, e3), _env)) ->
+            let env1 = (ident, v2)::_env in (value_of_expr e3 env1)
+          | _ -> (ErrorValue TypeMismatchError)
     (* Appel par valeur *)
     (* A compléter *)
-    (ErrorValue UndefinedExpressionError)
 
   (* ========================================================*)
   and
