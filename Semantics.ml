@@ -201,8 +201,15 @@ let rec value_of_expr expr env =
     (* Fonction d'évaluation d'un let *)
     (* "let ident = bvalue in bin" *)
     ruleLet _env _ident _bvalue _bin =
-    (* A compléter *)
-    (ErrorValue UndefinedExpressionError)
+    let v =
+      (value_of_expr bvalue env)
+    in
+    match v with
+      | (ErrorValue _) as result -> result
+      | _ -> let env1 =
+              (ident, v)::env
+            in 
+            (value_of_expr bin env1)
 
   (* ========================================================*)
   and
@@ -210,8 +217,12 @@ let rec value_of_expr expr env =
     (* Fonction d'évaluation d'une conditionnelle *)
     (* "if cond then bthen else belse" *)
     ruleIf _env _cond _bthen _belse =
-    (* A compléter *)
-    (ErrorValue UndefinedExpressionError)
+    let v1 = (value_of_expr cond env) in
+    match v1 with 
+      | (ErrorValue _) as result -> result
+      | TrueNode -> (value_of_expr bthen env)
+      | FalseNode -> (value_of_expr belse env)
+      | _ -> (ErrorValue TypeMismatchError)
 
   (* ========================================================*)
   and
