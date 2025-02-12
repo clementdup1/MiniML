@@ -234,7 +234,14 @@ let rec value_of_expr expr env =
     (* ruleCallByName : environment -> ast -> ast -> valueType *)
     (* Fonction d'évaluation d'un appel de fonction avec passage de paramètre par nom*)
     ruleCallByName _env _fexpr _pexpr = 
-    (ErrorValue UndefinedExpressionError)
+    let fvalue = (value_of_expr _fexpr _env) in
+    match fvalue with
+    | (FrozenValue (expr, defenv)) ->
+      (match expr with
+       | FunctionNode (par, body) -> let evalenv = (par, FrozenValue(_pexpr, _env))::defenv in
+       value_of_expr body evalenv
+       | _ ->(ErrorValue UndefinedExpressionError))
+    | _ -> (ErrorValue UndefinedExpressionError)
 
     (* A compléter *)
 
@@ -263,8 +270,7 @@ let rec value_of_expr expr env =
     (* Fonction d'évaluation d'un let rec*)
     (* "letrec ident = bvalue in bin" *)
     ruleLetrec _env _ident _bvalue _bin =
-    (* A compléter *)
-    (ErrorValue UndefinedExpressionError)
-
-
-
+    let env1 = (_ident, FrozenValue(_bin, _env))::_env in
+    match (value_of_expr _bvalue env1) with
+      | (ErrorValue _) as result -> result
+      | _ -> (value_of_expr _bin env1)
